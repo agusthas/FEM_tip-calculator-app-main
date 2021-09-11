@@ -1,6 +1,64 @@
 import './scss/main.scss';
 
-document.querySelector('.people-control')!.classList.add('error');
+// Stack overflow
+// https://stackoverflow.com/questions/469357/html-text-input-allow-only-numeric-input
+function setInputFilter(
+  textbox: Element,
+  inputFilter: (value: string) => boolean
+): void {
+  [
+    'input',
+    'keydown',
+    'keyup',
+    'mousedown',
+    'mouseup',
+    'select',
+    'contextmenu',
+    'drop',
+  ].forEach(function (event) {
+    textbox.addEventListener(
+      event,
+      function (
+        this: (HTMLInputElement | HTMLTextAreaElement) & {
+          oldValue: string;
+          oldSelectionStart: number | null;
+          oldSelectionEnd: number | null;
+        }
+      ) {
+        if (inputFilter(this.value)) {
+          this.oldValue = this.value;
+          this.oldSelectionStart = this.selectionStart;
+          this.oldSelectionEnd = this.selectionEnd;
+        } else if (Object.prototype.hasOwnProperty.call(this, 'oldValue')) {
+          this.value = this.oldValue;
+          if (
+            this.oldSelectionStart !== null &&
+            this.oldSelectionEnd !== null
+          ) {
+            this.setSelectionRange(
+              this.oldSelectionStart,
+              this.oldSelectionEnd
+            );
+          }
+        } else {
+          this.value = '';
+        }
+      }
+    );
+  });
+}
+
+setInputFilter(document.getElementById('bill-input')!, function (value) {
+  return /^\d*[.,]?\d*$/.test(value);
+});
+
+setInputFilter(document.getElementById('tip-input')!, function (value) {
+  return /^\d*[.,]?\d*$/.test(value);
+});
+
+setInputFilter(document.getElementById('people-input')!, function (value) {
+  return /^\d*$/.test(value);
+});
 
 // update result
 function updateResult(bill: number, tip: number, people: number): void {
@@ -54,7 +112,6 @@ function getValues(): {
     people: peopleInputElement.value ? parseFloat(peopleInputElement.value) : 1,
   };
 }
-
 // event listener
 billInputElement.addEventListener('input', () => {
   const { bill, tip, people } = getValues();
